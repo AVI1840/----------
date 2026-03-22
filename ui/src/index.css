@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Heebo', 'Rubik', ui-sans-serif, system-ui, sans-serif;
+  --color-btl-primary: #1B3A5C;
+  --color-btl-light: #2A5A8C;
+  --color-btl-bg: #f5f9ff;
+}
+
+html { direction: rtl; }
+body { font-family: var(--font-sans); background: var(--color-btl-bg); color: #1f1f1f; margin: 0; min-height: 100vh; }
