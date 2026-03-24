@@ -5,6 +5,7 @@ interface FeedbackModalProps { open: boolean; onClose: () => void; }
 const STORAGE_KEY = 'btl-feedback-benefit-choice';
 const APP_NAME = 'בחירת גמלה';
 const NAME_KEY = 'btl-feedback-user-name';
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwD8CMFoP5XoOwRLwK_OxMMOFKF8fS2CRpbJkNdOHjbnJIepkOLzlGrg3GQNGRqbwB6bA/exec';
 
 type Category = '🐛 באג' | '💡 שיפור' | '📊 נתונים' | '🎨 עיצוב';
 type Severity = 'קריטי' | 'שיפור' | 'קטן';
@@ -12,6 +13,21 @@ type Severity = 'קריטי' | 'שיפור' | 'קטן';
 interface FeedbackEntry {
   id: number; name: string; category: Category | ''; severity: Severity | '';
   text: string; timestamp: string; sent: boolean;
+}
+
+async function sendToSheet(entry: FeedbackEntry): Promise<boolean> {
+  try {
+    await fetch(SHEET_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        app: APP_NAME, name: entry.name || 'אנונימי',
+        category: entry.category || 'כללי', severity: entry.severity || '—',
+        text: entry.text, page: window.location.pathname,
+      }),
+    });
+    return true;
+  } catch { return false; }
 }
 
 const sevColor = (s: Severity | '') =>
@@ -30,13 +46,15 @@ export function FeedbackModal({ open, onClose }: FeedbackModalProps) {
 
   const save = (u: FeedbackEntry[]) => { setItems(u); localStorage.setItem(STORAGE_KEY, JSON.stringify(u)); };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!text.trim() || !name.trim()) return;
     localStorage.setItem(NAME_KEY, name.trim());
     const entry: FeedbackEntry = {
       id: Date.now(), name: name.trim(), category, severity,
       text: text.trim(), timestamp: new Date().toISOString(), sent: false,
     };
+    const ok = await sendToSheet(entry);
+    entry.sent = ok;
     save([entry, ...items]);
     setCategory(''); setSeverity(''); setText('');
   };
